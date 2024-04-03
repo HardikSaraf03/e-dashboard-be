@@ -1,16 +1,20 @@
-const express = require("express");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import { dbConnection } from "./db/config.js";
+import * as jwt from "jsonwebtoken";
+import { productModel, userModel } from "./models/index.js";
 
-require("./db/config");
-const User = require("./db/user");
-const Product = require("./db/product");
-const jwt = require("jsonwebtoken");
-const JWT_KEY = "e-dashboard-token";
+dotenv.config();
 
 const app = express();
+const JWT_KEY = process.env.JWT_KEY || "";
+const port = process.env.port || 4000;
 
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
+
+console.log(process.env.JWT_KEY);
 
 const auth = (req, res, next) => {
   let token = req.headers["authorization"];
@@ -31,7 +35,7 @@ const auth = (req, res, next) => {
 // Register API
 app.post("/register", async (req, res) => {
   console.log(req.body);
-  let user = User(req.body);
+  let user = userModel(req.body);
   let result = await user.save();
   result = result.toObject();
   delete result.password;
@@ -69,7 +73,7 @@ app.post("/login", async (req, res) => {
 
 // Add product API
 app.post("/add-product", auth, async (req, res) => {
-  let product = new Product(req.body);
+  let product = new productModel(req.body);
   let result = await product.save();
   res.send(result);
 });
@@ -128,4 +132,7 @@ app.get("/search/:key", auth, async (req, res) => {
   res.send(data);
 });
 
-app.listen(5000);
+app.listen(port, () => {
+  dbConnection();
+  console.log(`Server listening at http://localhost:${port}`);
+});
