@@ -9,12 +9,10 @@ dotenv.config();
 
 const app = express();
 const JWT_KEY = process.env.JWT_KEY || "";
-const port = process.env.port || 4000;
+const port = process.env.port || 5000;
 
 app.use(cors());
 app.use(express.json());
-
-console.log(process.env.JWT_KEY);
 
 const auth = (req, res, next) => {
   let token = req.headers["authorization"];
@@ -53,7 +51,7 @@ app.post("/register", async (req, res) => {
 // Login API
 app.post("/login", async (req, res) => {
   if (req.body.email && req.body.password) {
-    let user = await User.findOne(req.body).select("-password");
+    let user = await userModel.findOne(req.body).select("-password");
     console.log(user);
     if (user) {
       const token = jwt.sign({ user }, JWT_KEY, {
@@ -80,7 +78,7 @@ app.post("/add-product", auth, async (req, res) => {
 
 // Get all products API
 app.get("/products", auth, async (req, res) => {
-  let products = await Product.find();
+  let products = await productModel.find();
   if (products.length > 0) {
     res.send(products);
   } else {
@@ -91,14 +89,14 @@ app.get("/products", auth, async (req, res) => {
 // Delete product API
 app.delete("/product/:_id", auth, async (req, res) => {
   console.log(req.params);
-  let data = await Product.deleteOne(req.params);
+  let data = await productModel.deleteOne(req.params);
   res.send(data);
 });
 
 // Get product by id API
 app.get("/product/:_id", auth, async (req, res) => {
   console.log(req.params);
-  let data = await Product.findOne(req.params);
+  let data = await productModel.findOne(req.params);
   if (data) {
     res.send(data);
   } else {
@@ -109,7 +107,7 @@ app.get("/product/:_id", auth, async (req, res) => {
 // Update product by id API
 app.put("/product/:_id", auth, async (req, res) => {
   console.log(req.params);
-  let data = await Product.updateOne(req.params, {
+  let data = await productModel.updateOne(req.params, {
     $set: req.body,
   });
   if (data) {
@@ -122,7 +120,7 @@ app.put("/product/:_id", auth, async (req, res) => {
 // Search product by id API
 app.get("/search/:key", auth, async (req, res) => {
   console.log(req.params);
-  let data = await Product.find({
+  let data = await productModel.find({
     $or: [
       { name: { $regex: req.params.key } },
       { category: { $regex: req.params.key } },
